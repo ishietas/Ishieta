@@ -1,0 +1,109 @@
+#Question1
+import pandas as pd
+import numpy as np
+import seaborn as sns
+# Load the Titanic dataset
+df = sns.load_dataset('titanic')
+# Display the first few rows of the dataset
+print(titanic.head())
+# Handling missing values
+df['age'].fillna(df['age'].median(), inplace=True)
+df['embarked'].fillna(df['embarked'].mode()[0], inplace=True)
+# Removing outliers in 'Fare'
+q1, q3 = df['fare'].quantile([0.25, 0.75])
+iqr = q3 - q1
+lower_bound = q1 - 1.5 * iqr
+upper_bound = q3 + 1.5 * iqr
+df = df[(df['fare'] >= lower_bound) & (df['fare'] <= upper_bound)]
+# Validation checks
+print(df.isnull().sum())
+print(df.describe())
+
+
+#Question2
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, Binarizer
+# Standardization
+scaler = StandardScaler()
+df['Fare_scaled'] = scaler.fit_transform(df[['fare']])
+# Normalization
+normalizer = MinMaxScaler()
+df['Age_normalized'] = normalizer.fit_transform(df[['age']])
+# Binarization (e.g., Fare > 30)
+binarizer = Binarizer(threshold=30)
+df['Fare_binarized'] = binarizer.fit_transform(df[['fare']])
+
+
+#Question3
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+# Select features for clustering
+X = df[['age', 'fare']].dropna()
+# Perform K-Means with varying K
+inertia = []
+for k in range(1, 10):
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans.fit(X)
+    inertia.append(kmeans.inertia_)
+# Plot Elbow Curve
+plt.plot(range(1, 10), inertia, marker='o')
+plt.xlabel('Number of Clusters')
+plt.ylabel('Inertia')
+plt.title('Elbow Method for Optimal K')
+plt.show()
+
+
+#Question4
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics import silhouette_score
+# Partitioning (K-Means)
+kmeans = KMeans(n_clusters=3, random_state=42).fit(X)
+print("K-Means Silhouette Score:", silhouette_score(X, kmeans.labels_))
+# Hierarchical Clustering
+agglo = AgglomerativeClustering(n_clusters=3).fit(X)
+print("Hierarchical Clustering Silhouette Score:", silhouette_score(X, agglo.labels_))
+
+
+#Question5
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.model_selection import cross_val_score
+# Prepare the data
+X = df[['pclass', 'age', 'fare', 'sibsp', 'parch']].fillna(0)
+y = df['survived']
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Naive Bayes
+nb = GaussianNB()
+nb.fit(X_train, y_train)
+nb_preds = nb.predict(X_test)
+print("Naive Bayes Accuracy:", accuracy_score(y_test, nb_preds))
+# K-Nearest Neighbors
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+knn_preds = knn.predict(X_test)
+print("KNN Accuracy:", accuracy_score(y_test, knn_preds))
+# Decision Tree
+dt = DecisionTreeClassifier(max_depth=5, random_state=42)
+dt.fit(X_train, y_train)
+dt_preds = dt.predict(X_test)
+print("Decision Tree Accuracy:", accuracy_score(y_test, dt_preds))
+# Cross-Validation
+scores = cross_val_score(dt, X, y, cv=10, scoring='accuracy')
+print("Decision Tree Cross-Validation Accuracy:", scores.mean())
+
+
+#Question6
+from sklearn.ensemble import BaggingClassifier, AdaBoostClassifier
+# Bagging
+# Replace 'base_estimator' with 'estimator'
+bagging = BaggingClassifier(estimator=DecisionTreeClassifier(), n_estimators=10, random_state=42)  
+bagging.fit(X_train, y_train)
+bagging_preds = bagging.predict(X_test)
+print("Bagging Accuracy:", accuracy_score(y_test, bagging_preds))
+# Boosting
+boosting = AdaBoostClassifier(estimator=DecisionTreeClassifier(max_depth=3), n_estimators=10, random_state=42) # Replace 'base_estimator' with 'estimator'
+boosting.fit(X_train, y_train)
+boosting_preds = boosting.predict(X_test)
+print("Boosting Accuracy:", accuracy_score(y_test, boosting_preds))
